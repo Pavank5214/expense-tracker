@@ -74,7 +74,7 @@ const SmartEntryModal = ({ isOpen, onClose }) => {
       // Bulk processing (Sequential for simplicity and error tracking)
       for (const item of parsedData) {
         if (item.type === 'expense') {
-          await axios.post('http://localhost:5000/api/transactions/expense', {
+          await axios.post('/api/transactions/expense', {
             title: item.title,
             amount: item.amount,
             category: item.category,
@@ -82,20 +82,20 @@ const SmartEntryModal = ({ isOpen, onClose }) => {
           }, { headers: { Authorization: `Bearer ${user.token}` } });
         } else if (item.type === 'lending') {
           // 1. Find or Create Person
-          const peopleRes = await axios.get('http://localhost:5000/api/lending/people', {
+          const peopleRes = await axios.get('/api/lending/people', {
             headers: { Authorization: `Bearer ${user.token}` }
           });
           let person = peopleRes.data.find(p => p.name.toLowerCase() === item.personName.toLowerCase());
           
           if (!person) {
-            const newPersonRes = await axios.post('http://localhost:5000/api/lending/person', {
+            const newPersonRes = await axios.post('/api/lending/person', {
               name: item.personName
             }, { headers: { Authorization: `Bearer ${user.token}` } });
             person = newPersonRes.data;
           }
 
           // 2. Add Transaction
-          await axios.post('http://localhost:5000/api/lending/transaction', {
+          await axios.post('/api/lending/transaction', {
             personId: person._id,
             type: 'Lent',
             amount: item.amount,

@@ -32,7 +32,7 @@ const RecentActivity = () => {
   // Fetch dots (all activity but small payload or just dates)
   const fetchAllForDots = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/stats/activity?limit=2000`, {
+      const response = await axios.get(`/api/stats/activity?limit=2000`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setActivities(response.data.results);
@@ -47,7 +47,7 @@ const RecentActivity = () => {
     else setLoading(true);
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/stats/activity?page=${pageNum}&limit=10`, {
+      const response = await axios.get(`/api/stats/activity?page=${pageNum}&limit=10`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       

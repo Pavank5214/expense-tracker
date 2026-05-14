@@ -45,7 +45,7 @@ const Analytics = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/stats/analytics', {
+        const response = await axios.get('/api/stats/analytics', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setData(response.data);

@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const EXPENSE_URL = 'http://localhost:5000/api/expenses/';
-const INCOME_URL = 'http://localhost:5000/api/income/';
+const EXPENSE_URL = '/api/expenses/';
+const INCOME_URL = '/api/income/';
 
 const initialState = {
   expenses: [],

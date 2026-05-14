@@ -34,7 +34,7 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/stats/dashboard', {
+      const response = await axios.get('/api/stats/dashboard', {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setStats(response.data);
@@ -78,7 +78,7 @@ const Dashboard = () => {
     e.preventDefault();
     try {
       const endpoint = editingTx.type === 'income' ? 'income' : editingTx.type === 'lending' ? 'lending' : 'expenses';
-      await axios.put(`http://localhost:5000/api/${endpoint}/${editingTx._id}`, editFormData, {
+      await axios.put(`/api/${endpoint}/${editingTx._id}`, editFormData, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       toast.success('Updated successfully');
@@ -103,7 +103,7 @@ const Dashboard = () => {
             onClick={async () => {
               try {
                 const endpoint = tx.type === 'income' ? 'income' : tx.type === 'lending' ? 'lending' : 'expenses';
-                await axios.delete(`http://localhost:5000/api/${endpoint}/${tx._id}`, {
+                await axios.delete(`/api/${endpoint}/${tx._id}`, {
                   headers: { Authorization: `Bearer ${user.token}` }
                 });
                 toast.dismiss(t.id);

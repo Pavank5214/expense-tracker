@@ -76,6 +76,17 @@ FinTrack is a sophisticated, full-stack financial management application designe
 
 ---
 
+## ☁️ Deployment (Vercel)
+
+FinTrack is pre-configured for **Vercel** full-stack deployment.
+
+1.  **Push code** to GitHub.
+2.  **Import** project in Vercel.
+3.  **Environment Variables**: Add `MONGO_URI`, `JWT_SECRET`, and `NODE_ENV=production` in the Vercel project settings.
+4.  **Deploy**: Vercel will use the root `vercel.json` to route `/api` to the backend and serve the React frontend.
+
+---
+
 ## 📸 UI Snapshots
 *   **Dashboard**: Ambient orbs with interactive AreaCharts.
 *   **Lending Hub**: Detailed contact management and history.

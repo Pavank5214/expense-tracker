@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const LENDING_URL = 'http://localhost:5000/api/lending/';
+const LENDING_URL = '/api/lending/';
 
 const initialState = {
   transactions: [],

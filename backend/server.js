@@ -21,11 +21,13 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/expenses', require('./routes/expenseRoutes'));
-app.use('/api/income', require('./routes/incomeRoutes'));
-app.use('/api/lending', require('./routes/lendingRoutes'));
-app.use('/api/stats', require('./routes/statsRoutes'));
+const baseRoute = process.env.NODE_ENV === 'production' ? '/_/backend/api' : '/api';
+
+app.use(`${baseRoute}/users`, require('./routes/userRoutes'));
+app.use(`${baseRoute}/expenses`, require('./routes/expenseRoutes'));
+app.use(`${baseRoute}/income`, require('./routes/incomeRoutes'));
+app.use(`${baseRoute}/lending`, require('./routes/lendingRoutes'));
+app.use(`${baseRoute}/stats`, require('./routes/statsRoutes'));
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));

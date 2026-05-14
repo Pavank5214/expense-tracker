@@ -6,7 +6,14 @@ import axios from 'axios'
 import App from './App.jsx'
 import './index.css'
 
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/_/backend'
+// Detect environment: Local vs Vercel
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const defaultBaseURL = isLocal ? 'http://localhost:5000' : '/_/backend';
+
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || defaultBaseURL;
+
+// Debug log for production help
+console.log('API Base URL:', axios.defaults.baseURL);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

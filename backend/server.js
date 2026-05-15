@@ -21,6 +21,10 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Routes
+app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to the Expense Tracker API' });
+});
+
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/income', require('./routes/incomeRoutes'));

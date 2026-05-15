@@ -1,19 +1,24 @@
 const mongoose = require('mongoose');
 
+let cachedConnection = null;
+
 const connectDB = async () => {
+    if (cachedConnection) {
+        return cachedConnection;
+    }
+
     try {
         if (!process.env.MONGO_URI) {
-            console.error('ERROR: MONGO_URI is not defined in environment variables!');
-            return;
+            throw new Error('MONGO_URI is not defined in environment variables!');
         }
+        
         const conn = await mongoose.connect(process.env.MONGO_URI);
+        cachedConnection = conn;
         console.log(`MongoDB Connected: ${conn.connection.host}`);
+        return conn;
     } catch (error) {
         console.error(`Database Connection Error: ${error.message}`);
-        // In production (Vercel), don't exit the process as it kills the serverless function
-        if (process.env.NODE_ENV !== 'production') {
-            process.exit(1);
-        }
+        throw error; // Throw so we can catch it in the middleware
     }
 };
 

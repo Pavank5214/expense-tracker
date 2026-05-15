@@ -12,7 +12,18 @@ const app = express();
 
 app.use(cors());
 
-connectDB();
+// Ensure DB connection is established before handling requests
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        res.status(500).json({ 
+            message: 'Database connection failed', 
+            error: error.message 
+        });
+    }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

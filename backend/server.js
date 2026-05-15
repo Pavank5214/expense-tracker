@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Explicitly handle OPTIONS preflight requests
-app.options('*', cors());
+app.options('(.*)', cors());
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));

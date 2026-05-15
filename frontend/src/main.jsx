@@ -7,10 +7,8 @@ import App from './App.jsx'
 import './index.css'
 
 // Detect environment: Local vs Vercel
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const defaultBaseURL = isLocal ? 'http://localhost:5000' : '/_/backend';
-
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || defaultBaseURL;
+const defaultBaseURL = 'http://localhost:5000';
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || defaultBaseURL;
 
 // Debug log for production help
 console.log('API Base URL:', axios.defaults.baseURL);

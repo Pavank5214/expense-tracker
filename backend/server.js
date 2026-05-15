@@ -12,9 +12,17 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: true, // This will reflect the request origin
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Explicitly handle OPTIONS preflight requests
+app.options('*', cors());
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));

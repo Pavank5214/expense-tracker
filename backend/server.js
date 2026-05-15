@@ -21,8 +21,8 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Explicitly handle OPTIONS preflight requests
-app.options('(.*)', cors());
+// CORS is already handled globally by app.use(cors(...)) on line 15
+
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));

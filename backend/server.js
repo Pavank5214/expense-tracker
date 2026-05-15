@@ -13,15 +13,17 @@ connectDB();
 const app = express();
 
 app.use(cors({
-    origin: true, // This will reflect the request origin
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: [
+        'http://localhost:5173',
+        'https://expense.pavankumar.site'
+    ],
+    credentials: true
 }));
+
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// CORS is already handled globally by app.use(cors(...)) on line 15
 
 
 if (process.env.NODE_ENV === 'development') {

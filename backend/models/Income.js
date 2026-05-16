@@ -15,6 +15,15 @@ const incomeSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Please add an amount'],
     },
+    totalProjectAmount: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+        enum: ['Received', 'Pending'],
+        default: 'Received',
+    },
     source: {
         type: String,
         enum: ['Salary', 'Freelance', 'Business', 'Investments', 'Other'],

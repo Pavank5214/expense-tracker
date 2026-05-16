@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   Plus, Search, TrendingDown, Trash2, Edit2, LayoutGrid, X, 
@@ -197,25 +198,38 @@ const Expenses = () => {
         ) : <div className="py-20 text-center text-slate-500">No records found.</div>}
       </div>
 
-      <AnimatePresence>
-        {showModal && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl border border-slate-200/50 pointer-events-auto relative">
-                <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500"><X size={20} /></button>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">{editingId ? 'Edit' : 'New'} Expense</h3>
-                <form onSubmit={onSubmit} className="space-y-6">
-                  <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Amount</label><input type="number" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-4 px-6 text-2xl font-bold text-rose-600 focus:ring-2 focus:ring-rose-500/20 outline-none" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} required /></div>
-                  <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Title</label><input type="text" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-medium outline-none" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
-                  <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Date</label><input type="date" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-medium outline-none" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} required /></div>
-                  <button type="submit" className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-95 transition-all">Save Expense</button>
-                </form>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {showModal && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowModal(false)} className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm" />
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="fixed inset-0 z-[110] flex items-center justify-center p-4 pointer-events-none">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl border border-slate-200/50 pointer-events-auto relative max-h-[90vh] overflow-y-auto">
+                  <button onClick={() => setShowModal(false)} className="absolute top-6 right-6 w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500"><X size={20} /></button>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">{editingId ? 'Edit' : 'New'} Expense</h3>
+                  <form onSubmit={onSubmit} className="space-y-6">
+                    <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Amount</label><input type="number" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-4 px-6 text-2xl font-bold text-rose-600 focus:ring-2 focus:ring-rose-500/20 outline-none" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} required /></div>
+                    <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Title</label><input type="text" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-medium outline-none" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required /></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-500">Category</label>
+                        <select className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-medium outline-none" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} required>
+                          {categories.slice(1).map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2"><label className="text-xs font-semibold text-slate-500">Date</label><input type="date" className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm font-medium outline-none" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} required /></div>
+                    </div>
+                    <button type="submit" className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl text-sm font-bold shadow-lg active:scale-95 transition-all">Save Expense</button>
+                  </form>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </motion.div>
   );
 };

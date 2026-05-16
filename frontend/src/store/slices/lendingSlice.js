@@ -91,6 +91,26 @@ export const deleteLendingTransaction = createAsyncThunk('lending/deleteTransact
   }
 });
 
+export const updatePerson = createAsyncThunk('lending/updatePerson', async ({id, data}, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.user.token;
+    const response = await getAuthAxios(token).put(`${LENDING_URL}people/${id}`, data);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
+export const deletePerson = createAsyncThunk('lending/deletePerson', async (id, thunkAPI) => {
+  try {
+    const token = thunkAPI.getState().auth.user.token;
+    const response = await getAuthAxios(token).delete(`${LENDING_URL}people/${id}`);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+  }
+});
+
 export const lendingSlice = createSlice({
   name: 'lending',
   initialState,
@@ -130,6 +150,16 @@ export const lendingSlice = createSlice({
       })
       .addCase(deleteLendingTransaction.fulfilled, (state, action) => {
         state.transactions = state.transactions.filter((tx) => tx._id !== action.payload.id);
+      })
+      .addCase(updatePerson.fulfilled, (state, action) => {
+        state.people = state.people.map((p) => p._id === action.payload._id ? action.payload : p);
+        if (state.selectedPersonDetails?.person?._id === action.payload._id) {
+          state.selectedPersonDetails.person = action.payload;
+        }
+      })
+      .addCase(deletePerson.fulfilled, (state, action) => {
+        state.people = state.people.filter((p) => p._id !== action.payload.id);
+        state.selectedPersonDetails = null;
       });
   },
 });

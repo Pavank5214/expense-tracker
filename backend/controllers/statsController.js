@@ -10,27 +10,66 @@ const Person = require('../models/Person');
 const getDashboardStats = async (req, res) => {
     try {
         const userId = req.user.id;
-        const userObjectId = new mongoose.Types.ObjectId(userId);
+        // Robust ID handling: try both string and ObjectId
+        const userObjectId = mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : userId;
+        const userMatch = { $or: [{ user: userId }, { user: userObjectId }] };
+        const { range = 'week', startDate, endDate } = req.query;
 
-        // Total Income
-        const totalIncomeResult = await Income.aggregate([
-            { $match: { user: userObjectId } },
+        let start = new Date();
+        start.setHours(0, 0, 0, 0);
+        let end = new Date();
+        end.setHours(23, 59, 59, 999);
+        let granularity = 'day';
+
+        if (range === 'week') {
+            start.setDate(start.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+        } else if (range === 'month') {
+            start.setMonth(start.getMonth() - 1);
+            start.setHours(0, 0, 0, 0);
+        } else if (range === 'custom' && startDate && endDate) {
+            start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        }
+
+        // Lifetime Totals
+        const lifetimeIncomeResult = await Income.aggregate([
+            { $match: userMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalIncome = totalIncomeResult[0]?.total || 0;
+        const lifetimeIncome = lifetimeIncomeResult[0]?.total || 0;
 
-        // Total Expenses
-        const totalExpensesResult = await Expense.aggregate([
-            { $match: { user: userObjectId } },
+        const lifetimeExpensesResult = await Expense.aggregate([
+            { $match: userMatch },
             { $group: { _id: null, total: { $sum: '$amount' } } }
         ]);
-        const totalExpenses = totalExpensesResult[0]?.total || 0;
+        const lifetimeExpenses = lifetimeExpensesResult[0]?.total || 0;
+
+        // Period Totals
+        const periodIncomeResult = await Income.aggregate([
+            { $match: { ...userMatch, date: { $gte: start, $lte: end } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const periodIncome = periodIncomeResult[0]?.total || 0;
+
+        const periodExpensesResult = await Expense.aggregate([
+            { $match: { ...userMatch, date: { $gte: start, $lte: end } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const periodExpenses = periodExpensesResult[0]?.total || 0;
+
+        const periodLendingResult = await Lending.aggregate([
+            { $match: { ...userMatch, date: { $gte: start, $lte: end } } },
+            { $group: { _id: null, total: { $sum: '$amount' } } }
+        ]);
+        const periodLending = periodLendingResult[0]?.total || 0;
 
         // Lending stats
         const people = await Person.find({ user: userId });
         let totalReceivable = 0;
         let totalPayable = 0;
-
         people.forEach(p => {
             if (p.balance > 0) totalReceivable += p.balance;
             if (p.balance < 0) totalPayable += Math.abs(p.balance);
@@ -39,28 +78,18 @@ const getDashboardStats = async (req, res) => {
         // Combined Recent Transactions
         const recentExpenses = await Expense.find({ user: userId }).sort({ date: -1 }).limit(10);
         const recentIncomes = await Income.find({ user: userId }).sort({ date: -1 }).limit(10);
-        const recentLendings = await Lending.find({ user: userId }).populate('person').sort({ date: -1 }).limit(10);
-
+        
         const recentTransactions = [
             ...recentExpenses.map(e => ({...e._doc, type: 'expense'})), 
-            ...recentIncomes.map(i => ({...i._doc, type: 'income', category: i.source})),
-            ...recentLendings.map(l => ({
-                ...l._doc, 
-                type: 'lending', 
-                category: l.type, 
-                title: `${l.type.replace('_', ' ')}: ${l.person?.name || 'Someone'}`
-            }))
+            ...recentIncomes.map(i => ({...i._doc, type: 'income', category: i.source}))
         ]
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
 
-        // Weekly Trends Data
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
-
+        // Trend Grouping
         const groupTrend = async (Model, matchField = 'amount') => {
             return await Model.aggregate([
-                { $match: { user: userObjectId, date: { $gte: last7Days } } },
+                { $match: { ...userMatch, date: { $gte: start, $lte: end } } },
                 {
                     $group: {
                         _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
@@ -71,34 +100,42 @@ const getDashboardStats = async (req, res) => {
             ]);
         };
 
-        const expenseTrend = await groupTrend(Expense);
-        const incomeTrend = await groupTrend(Income);
-        const lendingTrend = await groupTrend(Lending);
+        const expenseTrendRaw = await groupTrend(Expense);
+        const incomeTrendRaw = await groupTrend(Income);
+        const lendingTrendRaw = await groupTrend(Lending);
 
-        // Helper to format trend for frontend
-        const formatTrend = (trend) => {
-            const days = [];
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
-                const match = trend.find(t => t._id === dateStr);
-                days.push({ name: d.toLocaleDateString('en-US', { weekday: 'short' }), amount: match ? match.total : 0 });
+        // Helper to fill missing dates in trend
+        const formatTrendData = (raw) => {
+            const result = [];
+            const curr = new Date(start);
+            while (curr <= end) {
+                const dateStr = curr.toISOString().split('T')[0];
+                const match = raw.find(t => t._id === dateStr);
+                result.push({
+                    name: curr.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+                    amount: match ? match.total : 0,
+                    date: dateStr
+                });
+                curr.setDate(curr.getDate() + 1);
             }
-            return days;
+            return result;
         };
 
         res.status(200).json({
-            totalIncome,
-            totalExpenses,
+            totalIncome: lifetimeIncome,
+            totalExpenses: lifetimeExpenses,
+            netBalance: lifetimeIncome - lifetimeExpenses + (totalReceivable - totalPayable),
+            periodIncome,
+            periodExpenses,
+            periodNet: periodIncome - periodExpenses,
+            periodLending,
             totalReceivable,
             totalPayable,
-            netBalance: totalIncome - totalExpenses + totalReceivable - totalPayable,
             recentTransactions,
             trends: {
-                expenses: formatTrend(expenseTrend),
-                income: formatTrend(incomeTrend),
-                lending: formatTrend(lendingTrend)
+                expenses: formatTrendData(expenseTrendRaw),
+                income: formatTrendData(incomeTrendRaw),
+                lending: formatTrendData(lendingTrendRaw)
             }
         });
     } catch (error) {

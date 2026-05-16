@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut, 
   Search,
-  Bell
+  Bell,
+  RefreshCw
 } from 'lucide-react';
 import { logout } from '../store/slices/authSlice';
 import { motion } from 'framer-motion';
@@ -41,6 +42,7 @@ const MainLayout = () => {
     { name: 'Expenses', icon: <Wallet size={20} />, path: '/expenses' },
     { name: 'Income', icon: <ArrowDownUp size={20} />, path: '/income' },
     { name: 'Lending', icon: <Users size={20} />, path: '/lending' },
+    { name: 'Subscriptions', icon: <RefreshCw size={20} />, path: '/subscriptions' },
     { name: 'Analytics', icon: <BarChart3 size={20} />, path: '/analytics' },
     { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
   ];
@@ -116,13 +118,14 @@ const MainLayout = () => {
       </aside>
 
       {/* GLASS MOBILE NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-6 left-4 right-4 z-50 transform-gpu">
+      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
         <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] p-2 flex items-center justify-around border border-white/50 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.1)]">
           {[
             { path: '/', icon: LayoutDashboard, label: 'Home' },
             { path: '/expenses', icon: Wallet, label: 'Spent' },
             { path: '/income', icon: ArrowDownUp, label: 'Income' },
             { path: '/lending', icon: Users, label: 'Lend' },
+            { path: '/subscriptions', icon: RefreshCw, label: 'Subs' },
             { path: '/settings', icon: Settings, label: 'Settings' }
           ].map((item) => {
             const Icon = item.icon;
@@ -132,15 +135,13 @@ const MainLayout = () => {
               <Link 
                 key={item.path}
                 to={item.path} 
-                className={`relative flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-200 ${
+                className={`relative flex flex-col items-center justify-center w-14 h-12 rounded-2xl transition-all duration-200 ${
                   isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                 }`}
               >
                 {isActive && (
-                  <motion.div 
-                    layoutId="mobileNavIndicator"
+                  <div 
                     className="absolute inset-0 bg-white/80 dark:bg-white/5 border border-white/80 dark:border-white/10 rounded-[1.25rem] -z-10 backdrop-blur-md"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
                 <Icon size={22} className={`transition-transform duration-200 ${isActive ? 'scale-110 mb-1 drop-shadow-sm' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
@@ -154,10 +155,10 @@ const MainLayout = () => {
       </nav>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden pb-24 lg:pb-0 relative z-10 transform-gpu">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden pb-24 lg:pb-0 relative">
         
         {/* GLASS HEADER */}
-        <header className="h-24 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/40 dark:border-white/10 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        <header className="h-16 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border-b border-white/40 dark:border-white/10 flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
           
           <div className="flex items-center gap-4 lg:hidden">
             <Link to="/settings" className="flex flex-col transition-all active:scale-95">

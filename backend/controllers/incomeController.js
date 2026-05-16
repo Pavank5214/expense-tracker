@@ -26,9 +26,9 @@ const getIncomes = async (req, res) => {
 // @route   POST /api/income
 // @access  Private
 const setIncome = async (req, res) => {
-    const { title, amount, source, date, notes } = req.body;
+    const { title, amount, source, date, notes, totalProjectAmount, status } = req.body;
 
-    if (!title || !amount) {
+    if (!title || amount === undefined) {
         res.status(400);
         throw new Error('Please add a title and amount');
     }
@@ -37,6 +37,8 @@ const setIncome = async (req, res) => {
         user: req.user.id,
         title,
         amount,
+        totalProjectAmount,
+        status,
         source,
         date,
         notes,

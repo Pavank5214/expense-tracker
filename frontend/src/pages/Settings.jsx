@@ -21,8 +21,8 @@ const Settings = () => {
   const [editData, setEditData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    gender: user?.gender || 'male',
-    phoneNumber: user?.phoneNumber || ''
+    phoneNumber: user?.phoneNumber || '',
+    monthlyGoal: user?.monthlyGoal || 0
   });
 
   useEffect(() => {
@@ -43,8 +43,8 @@ const Settings = () => {
       setEditData({
         name: user.name || '',
         email: user.email || '',
-        gender: user.gender || 'male',
-        phoneNumber: user.phoneNumber || ''
+        phoneNumber: user.phoneNumber || '',
+        monthlyGoal: user.monthlyGoal || 0
       });
     }
   }, [user]);
@@ -71,10 +71,10 @@ const Settings = () => {
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 28 } }
   };
 
-  // Improved Avatar logic: Force new style unless it's a custom upload (not starting with dicebear)
-  const avatarUrl = (user?.avatar && !user.avatar.includes('avataaars')) 
+  // Unified Neutral Avatar for all users
+  const avatarUrl = (user?.avatar && !user.avatar.includes('dicebear')) 
     ? user.avatar 
-    : `https://api.dicebear.com/7.x/lorelei/svg?seed=${user?.gender === 'female' ? 'Willow' : 'Loki'}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+    : `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Felix&backgroundColor=b6e3f4`;
 
   return (
     <motion.div 
@@ -113,9 +113,6 @@ const Settings = () => {
               </div>
               
               <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-                <span className="px-3 py-1.5 bg-white/10 backdrop-blur-md text-slate-300 text-[10px] font-semibold uppercase tracking-wider rounded-full border border-white/10 shadow-sm capitalize">
-                  {user?.gender || 'male'}
-                </span>
               </div>
 
               <div className="pt-2 sm:pt-4 border-t border-white/5 sm:border-transparent">
@@ -143,7 +140,7 @@ const Settings = () => {
               { icon: <Mail size={18}/>, label: 'Email Address', value: user?.email, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100/50 dark:bg-indigo-500/20' },
               { icon: <Phone size={18}/>, label: 'Phone Number', value: user?.phoneNumber || 'Not provided', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-100/50 dark:bg-purple-500/20' },
               { icon: <Calendar size={18}/>, label: 'Member Since', value: user?.createdAt ? format(new Date(user.createdAt), 'MMMM dd, yyyy') : 'Unknown', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100/50 dark:bg-emerald-500/20' },
-              { icon: <CheckCircle2 size={18}/>, label: 'Status', value: 'Active / Verified', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100/50 dark:bg-blue-500/20' },
+              { icon: <Zap size={18}/>, label: 'Monthly Budget Goal', value: user?.monthlyGoal > 0 ? `Target: ${formatCurrency(user.monthlyGoal)}` : 'No goal set yet', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100/50 dark:bg-amber-500/20' },
             ].map((item, idx, arr) => (
               <div 
                 key={idx} 
@@ -285,18 +282,16 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-500 ml-1">Gender</label>
+                      <label className="text-xs font-semibold text-slate-500 ml-1">Monthly Budget Goal</label>
                       <div className="relative">
-                        <select 
-                          className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800/60 rounded-[1.25rem] py-3.5 px-5 text-sm font-medium appearance-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white"
-                          value={editData.gender}
-                          onChange={(e) => setEditData({...editData, gender: e.target.value})}
-                        >
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="other">Other</option>
-                        </select>
-                        <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                        <Zap size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input 
+                          type="number" 
+                          placeholder="0.00"
+                          className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800/60 rounded-[1.25rem] py-3.5 pl-12 pr-5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all text-slate-900 dark:text-white"
+                          value={editData.monthlyGoal}
+                          onChange={(e) => setEditData({...editData, monthlyGoal: e.target.value})}
+                        />
                       </div>
                     </div>
                   </div>

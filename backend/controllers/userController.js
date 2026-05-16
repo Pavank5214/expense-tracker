@@ -21,11 +21,9 @@ const registerUser = async (req, res) => {
         throw new Error('User already exists');
     }
 
-    // Default avatar based on gender
-    let avatar = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Loki&backgroundColor=b6e3f4,c0aede,d1d4f9'; // Male default
-    if (gender === 'female') {
-        avatar = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Willow&backgroundColor=b6e3f4,c0aede,d1d4f9';
-    }
+    // Single high-quality neutral avatar for all users
+    let avatar = `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Felix&backgroundColor=b6e3f4`; 
+    if (req.body.avatar) avatar = req.body.avatar;
 
     // Create user
     const user = await User.create({
@@ -44,6 +42,7 @@ const registerUser = async (req, res) => {
             email: user.email,
             gender: user.gender,
             phoneNumber: user.phoneNumber,
+            monthlyGoal: user.monthlyGoal || 0,
             avatar: user.avatar,
             token: generateToken(user._id),
         });
@@ -69,6 +68,7 @@ const loginUser = async (req, res) => {
             email: user.email,
             gender: user.gender,
             phoneNumber: user.phoneNumber,
+            monthlyGoal: user.monthlyGoal || 0,
             avatar: user.avatar,
             token: generateToken(user._id),
         });
@@ -108,15 +108,11 @@ const updateProfile = async (req, res) => {
         user.name = req.body.name || user.name;
         user.email = req.body.email || user.email;
         user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
+        user.monthlyGoal = req.body.monthlyGoal !== undefined ? req.body.monthlyGoal : user.monthlyGoal;
 
-        // Gender & Avatar update logic
-        if (req.body.gender && req.body.gender !== user.gender) {
-            user.gender = req.body.gender;
-            if (req.body.gender === 'female') {
-                user.avatar = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Willow&backgroundColor=b6e3f4,c0aede,d1d4f9';
-            } else {
-                user.avatar = 'https://api.dicebear.com/7.x/lorelei/svg?seed=Loki&backgroundColor=b6e3f4,c0aede,d1d4f9';
-            }
+        // Simple Neutral Avatar
+        if (!user.avatar || user.avatar.includes('dicebear')) {
+            user.avatar = `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Felix&backgroundColor=b6e3f4`;
         }
 
         // Password update
@@ -132,6 +128,7 @@ const updateProfile = async (req, res) => {
             email: updatedUser.email,
             gender: updatedUser.gender,
             phoneNumber: updatedUser.phoneNumber,
+            monthlyGoal: updatedUser.monthlyGoal || 0,
             avatar: updatedUser.avatar,
             token: generateToken(updatedUser._id),
         });

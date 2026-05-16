@@ -47,7 +47,9 @@ const MainLayout = () => {
     { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
   ];
 
-  const avatarUrl = user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.gender === 'female' ? 'Aria' : 'Felix'}&backgroundColor=transparent`;
+  const avatarUrl = (user?.avatar && !user.avatar.includes('dicebear')) 
+    ? user.avatar 
+    : `https://api.dicebear.com/7.x/notionists-neutral/svg?seed=Felix&backgroundColor=b6e3f4`;
 
   return (
     <div className="min-h-screen flex relative overflow-hidden bg-[#f4f7fb] dark:bg-slate-950 transition-colors duration-300">
@@ -72,8 +74,8 @@ const MainLayout = () => {
           
           {/* Logo Area */}
           <div className="p-8 flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/20 rounded-[1.25rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-2xl shadow-lg shadow-indigo-500/10">
-              F
+            <div className="w-12 h-12 bg-white/80 dark:bg-white/10 backdrop-blur-md border border-white/60 dark:border-white/20 rounded-[1.25rem] flex items-center justify-center overflow-hidden shadow-lg shadow-indigo-500/10">
+              <img src="/favicon.png" alt="FinTrack Logo" className="w-full h-full object-cover p-1.5" />
             </div>
             <span className="text-2xl font-bold bg-gradient-to-br from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent tracking-tight">
               FinTrack

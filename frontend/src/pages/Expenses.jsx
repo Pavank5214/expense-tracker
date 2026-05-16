@@ -163,7 +163,7 @@ const Expenses = () => {
                         <div className={`w-12 h-12 ${theme.bg} ${theme.color} rounded-full flex items-center justify-center`}>{theme.icon}</div>
                         <div>
                           <h4 className="font-bold text-sm text-slate-900 dark:text-white">{exp.title}</h4>
-                          <p className="text-xs text-slate-500 font-medium">{exp.category}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{exp.category} • {format(new Date(exp.date), 'MMM dd')}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">

@@ -7,7 +7,7 @@ import {
   Users, Eye, EyeOff, ChevronRight, Activity, 
   CreditCard, Coffee, Plane, ShoppingBag, Zap, Wallet,
   Sparkles, Trash2, ArrowUpRight, ArrowDownRight, MoreHorizontal,
-  Edit2, X, TrendingUp, Plus
+  Edit2, X, TrendingUp, Plus, Briefcase, DollarSign, Check
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer 
@@ -64,12 +64,16 @@ const Dashboard = () => {
     }
   }, [user, range, customDates]);
 
-  const getCategoryTheme = (cat) => {
+  const getCategoryTheme = (cat, type) => {
+    if (type === 'lending') return { icon: <Users size={20}/>, color: 'text-orange-500', bg: 'bg-orange-100/50 dark:bg-orange-500/20' };
+    
     switch(cat?.toLowerCase()) {
       case 'food': return { icon: <Coffee size={20}/>, color: 'text-orange-500', bg: 'bg-orange-100/50 dark:bg-orange-500/20' };
       case 'travel': return { icon: <Plane size={20}/>, color: 'text-blue-500', bg: 'bg-blue-100/50 dark:bg-blue-500/20' };
       case 'shopping': return { icon: <ShoppingBag size={20}/>, color: 'text-pink-500', bg: 'bg-pink-100/50 dark:bg-pink-500/20' };
       case 'bills': return { icon: <Zap size={20}/>, color: 'text-yellow-500', bg: 'bg-yellow-100/50 dark:bg-yellow-500/20' };
+      case 'salary': return { icon: <Briefcase size={20}/>, color: 'text-emerald-500', bg: 'bg-emerald-100/50 dark:bg-emerald-500/20' };
+      case 'freelance': return { icon: <DollarSign size={20}/>, color: 'text-blue-500', bg: 'bg-blue-100/50 dark:bg-blue-500/20' };
       default: return { icon: <Wallet size={20}/>, color: 'text-indigo-500', bg: 'bg-indigo-100/50 dark:bg-indigo-500/20' };
     }
   };
@@ -106,12 +110,12 @@ const Dashboard = () => {
     e.stopPropagation();
     setActiveMenuId(null);
     toast((t) => (
-      <div className="w-[300px] flex flex-col gap-3 p-1">
+      <div className="w-full flex flex-col gap-3">
         <div className="space-y-1">
-          <p className="text-sm font-bold text-white">Delete Record?</p>
-          <p className="text-xs text-slate-400">Are you sure you want to delete "{tx.title}"?</p>
+          <p className="text-sm font-extrabold text-white">Delete Record?</p>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed">Are you sure you want to delete "{tx.title}"?</p>
         </div>
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2">
           <button 
             onClick={async () => {
               try {
@@ -120,25 +124,40 @@ const Dashboard = () => {
                   headers: { Authorization: `Bearer ${user.token}` }
                 });
                 toast.dismiss(t.id);
-                toast.success('Deleted successfully');
+                // Custom animated delete success toast
+                toast((st) => (
+                  <div className="flex items-center gap-3 py-1">
+                    <motion.div 
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"
+                    >
+                      <Check size={18} strokeWidth={3} />
+                    </motion.div>
+                    <div className="flex flex-col">
+                      <p className="text-[13px] font-black text-white leading-none">Record Deleted</p>
+                      <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Moved to trash</p>
+                    </div>
+                  </div>
+                ), { duration: 3000 });
                 fetchStats();
               } catch (err) {
                 toast.error('Failed to delete');
               }
             }}
-            className="flex-1 py-2 bg-rose-500 text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-rose-600 transition-colors"
+            className="flex-1 py-1.5 bg-rose-500 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all active:scale-[0.98]"
           >
             Delete
           </button>
           <button 
             onClick={() => toast.dismiss(t.id)}
-            className="flex-1 py-2 bg-white/10 text-slate-300 rounded-lg text-xs font-semibold hover:bg-white/20 transition-colors"
+            className="flex-1 py-1.5 bg-white/5 text-slate-400 rounded-lg text-[11px] font-bold hover:bg-white/10 transition-all border border-white/5"
           >
             Cancel
           </button>
         </div>
       </div>
-    ), { duration: 4000 });
+    ), { duration: 5000 });
   };
 
   const containerVariants = {
@@ -166,57 +185,90 @@ const Dashboard = () => {
       animate="show"
       className="max-w-3xl mx-auto space-y-6 pb-24 pt-4 px-4"
     >
-      {/* Hero Balance Card */}
+      {/* Ultra-Compact 4-Metric Grid */}
       <motion.div 
         variants={itemVariants}
-        className="relative overflow-hidden bg-slate-900 dark:bg-black/40 backdrop-blur-[2rem] rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/10"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3"
+      >
+        <div className="bg-slate-900 dark:bg-black/40 backdrop-blur-xl p-3.5 rounded-2xl border border-white/10 shadow-lg">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Wallet size={14} />
+            </div>
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Balance</p>
+          </div>
+          <h3 className="text-base font-black text-white leading-none">
+            {hideBalance ? '••••' : formatCurrency(stats?.totalIncome - stats?.totalExpenses || 0)}
+          </h3>
+        </div>
+
+        <div className="bg-emerald-500/5 backdrop-blur-xl p-3.5 rounded-2xl border border-emerald-500/10 shadow-lg">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+              <TrendingUp size={14} />
+            </div>
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Income</p>
+          </div>
+          <h3 className="text-base font-black text-slate-900 dark:text-white leading-none">
+            {formatCurrency(stats?.totalIncome || 0)}
+          </h3>
+        </div>
+
+        <div className="bg-blue-500/5 backdrop-blur-xl p-3.5 rounded-2xl border border-blue-500/10 shadow-lg">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-500">
+              <Users size={14} />
+            </div>
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Lend</p>
+          </div>
+          <h3 className="text-base font-black text-slate-900 dark:text-white leading-none">
+            {formatCurrency(stats?.totalReceivable || 0)}
+          </h3>
+        </div>
+
+        <div className="bg-purple-500/5 backdrop-blur-xl p-3.5 rounded-2xl border border-purple-500/10 shadow-lg">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-500">
+              <Briefcase size={14} />
+            </div>
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Pending</p>
+          </div>
+          <h3 className="text-base font-black text-slate-900 dark:text-white leading-none">
+            {formatCurrency(stats?.pendingIncome || 0)}
+          </h3>
+        </div>
+      </motion.div>
+
+      {/* Compact Net Wealth Card */}
+      <motion.div 
+        variants={itemVariants}
+        className="relative overflow-hidden bg-slate-900 rounded-[1.5rem] p-5 shadow-xl border border-white/10"
       >
         <div className="absolute -top-32 -right-32 w-80 h-80 bg-indigo-500/20 blur-[4rem] rounded-full"></div>
-        <div className="relative z-10 space-y-6 sm:space-y-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
-              <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Net Wealth</p>
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Net Wealth</p>
             </div>
-            <button onClick={() => setHideBalance(!hideBalance)} className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-300 border border-white/10">
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter leading-none">
+              {hideBalance ? '••••••••' : formatCurrency(stats?.netBalance || 0)}
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-[8px] font-black text-emerald-400/80 uppercase tracking-tight">
+                Projected: {hideBalance ? '••••' : formatCurrency((stats?.totalIncome - stats?.totalExpenses) + stats?.pendingIncome)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block pr-3 border-r border-white/10">
+              <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Spent</p>
+              <p className="text-sm font-black text-rose-400">-{formatCurrency(stats?.totalExpenses || 0)}</p>
+            </div>
+            <button onClick={() => setHideBalance(!hideBalance)} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/15 flex items-center justify-center text-slate-300 border border-white/10 transition-colors">
               {hideBalance ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
-          </div>
-          <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tighter truncate">
-            {hideBalance ? '••••••••' : formatCurrency(stats?.netBalance || 0)}
-          </h2>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-white/5 p-3 sm:p-4 rounded-2xl border border-white/5">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Total Income</p>
-              <p className="text-base sm:text-lg font-black text-emerald-400">+{formatCurrency(stats?.totalIncome || 0)}</p>
-            </div>
-            <div className="bg-white/5 p-3 sm:p-4 rounded-2xl border border-white/5">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Total Spent</p>
-              <p className="text-base sm:text-lg font-black text-rose-400">-{formatCurrency(stats?.totalExpenses || 0)}</p>
-            </div>
-          </div>
-          
-          {/* Lending/Debt Summary Row */}
-          <div className="flex items-center gap-3 px-1 pt-2 border-t border-white/5">
-            <div className="flex-1 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <ArrowDownRight size={12} />
-              </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Receivable</p>
-                <p className="text-[11px] font-bold text-slate-300">{formatCurrency(stats?.totalReceivable || 0)}</p>
-              </div>
-            </div>
-            <div className="w-px h-6 bg-white/10"></div>
-            <div className="flex-1 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500">
-                <ArrowUpRight size={12} />
-              </div>
-              <div>
-                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Payable</p>
-                <p className="text-[11px] font-bold text-slate-300">{formatCurrency(stats?.totalPayable || 0)}</p>
-              </div>
-            </div>
           </div>
         </div>
       </motion.div>
@@ -450,8 +502,8 @@ const Dashboard = () => {
           <Link to="/activity" className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">View All</Link>
         </div>
         <div className="space-y-3">
-          {stats?.recentTransactions?.map((tx) => {
-            const theme = getCategoryTheme(tx.category);
+          {stats?.recentTransactions?.slice(0, 7).map((tx) => {
+            const theme = getCategoryTheme(tx.category, tx.type);
             const isMenuOpen = activeMenuId === tx._id;
             return (
               <div key={tx._id} className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl border border-white/60 dark:border-white/10 p-4 flex items-center justify-between shadow-sm relative group overflow-visible">
@@ -461,7 +513,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-slate-900 dark:text-white">{tx.title}</h4>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tx.category} • {format(new Date(tx.date), 'MMM dd')}</p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{tx.category} • {format(new Date(tx.date), 'MMM dd')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

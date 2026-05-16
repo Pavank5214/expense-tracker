@@ -36,6 +36,10 @@ const incomeSchema = new mongoose.Schema({
     notes: {
         type: String,
     },
+    person: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Person',
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Income', incomeSchema);

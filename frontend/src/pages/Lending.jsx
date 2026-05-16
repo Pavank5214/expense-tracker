@@ -5,7 +5,7 @@ import {
   Plus, Search, UserPlus, ArrowUpRight, ArrowDownRight, 
   Clock, CheckCircle2, AlertCircle, ChevronDown, User,
   HandCoins, ArrowRightLeft, LayoutGrid, X, MoreHorizontal,
-  Edit2, Trash2, ArrowLeft, Phone, Mail, History, Notebook, MessageCircle
+  Edit2, Trash2, ArrowLeft, Phone, Mail, History, Notebook, MessageCircle, Check
 } from 'lucide-react';
 import { 
   getLendingTransactions, getPeople, addPerson, addLendingTransaction, 
@@ -20,7 +20,9 @@ import { format, isToday } from 'date-fns';
 const Lending = () => {
   const dispatch = useDispatch();
   const { transactions, totalPages, people, selectedPersonDetails, isLoading } = useSelector((state) => state.lending);
+  const { user } = useSelector((state) => state.auth);
   
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
   const [showTxModal, setShowTxModal] = useState(false);
   const [showPersonModal, setShowPersonModal] = useState(false);
   const [page, setPage] = useState(1);
@@ -123,32 +125,46 @@ const Lending = () => {
     e?.stopPropagation();
     
     toast((t) => (
-      <div className="w-[300px] flex flex-col gap-3 p-1">
+      <div className="w-full flex flex-col gap-3">
         <div className="space-y-1">
-          <p className="text-sm font-bold text-white">Delete Contact?</p>
-          <p className="text-xs text-slate-400">All transactions for this contact will be removed.</p>
+          <p className="text-sm font-extrabold text-white">Delete Contact?</p>
+          <p className="text-xs text-slate-400 font-medium leading-relaxed">All transactions for this contact will be removed.</p>
         </div>
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2">
           <button 
             onClick={() => {
               dispatch(deletePerson(personId));
               toast.dismiss(t.id);
-              toast.success('Contact deleted');
-            }}
-            className="flex-1 py-2 bg-rose-500 text-white rounded-lg text-xs font-semibold hover:bg-rose-600 transition-colors"
+              toast((st) => (
+                <div className="flex items-center gap-3 py-1">
+                  <motion.div 
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"
+                  >
+                    <Check size={18} strokeWidth={3} />
+                  </motion.div>
+                  <div className="flex flex-col">
+                    <p className="text-[13px] font-black text-white leading-none">Contact Removed</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">History deleted</p>
+                  </div>
+                </div>
+              ), { duration: 3000 });
+            }} 
+            className="flex-1 py-1.5 bg-rose-500 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-rose-500/10 hover:bg-rose-600 transition-all active:scale-[0.98]"
           >
             Delete
           </button>
           <button 
             onClick={() => toast.dismiss(t.id)}
-            className="flex-1 py-2 bg-white/10 text-slate-300 rounded-lg text-xs font-semibold hover:bg-white/20 transition-colors"
+            className="flex-1 py-1.5 bg-white/5 text-slate-400 rounded-lg text-[11px] font-bold border border-white/5 hover:bg-white/10 transition-all"
           >
             Cancel
           </button>
         </div>
       </div>
     ), { 
-      duration: 4000,
+      duration: 5000,
       style: { background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)' }
     });
   };
@@ -182,7 +198,13 @@ const Lending = () => {
   };
 
   const handlePersonClick = (pId) => {
-    dispatch(getPersonDetails(pId));
+    if (selectedPersonId === pId) {
+      setSelectedPersonId(null);
+      dispatch(clearSelectedPerson());
+    } else {
+      setSelectedPersonId(pId);
+      dispatch(getPersonDetails(pId));
+    }
   };
 
   const getStatusIcon = (type) => {
@@ -195,10 +217,12 @@ const Lending = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter(tx => 
-    tx.person?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tx.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTransactions = transactions.filter(tx => {
+    const matchesSearch = tx.person?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         tx.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPerson = !selectedPersonId || tx.person?._id === selectedPersonId || tx.person === selectedPersonId;
+    return matchesSearch && matchesPerson;
+  });
 
   const totalReceivable = people.reduce((acc, p) => p.balance > 0 ? acc + p.balance : acc, 0);
   const totalPayable = people.reduce((acc, p) => p.balance < 0 ? acc + Math.abs(p.balance) : acc, 0);
@@ -206,35 +230,46 @@ const Lending = () => {
   return (
     <div className="max-w-3xl mx-auto pb-32 pt-4 px-4 space-y-8">
       
-      <div className="grid grid-cols-2 gap-4">
-        <motion.div whileHover={{ y: -2 }} className="bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-[2rem] p-6">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white mb-3">
-            <ArrowDownRight size={20} />
-          </div>
-          <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Receivable</p>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(totalReceivable)}</h2>
-        </motion.div>
-        <motion.div whileHover={{ y: -2 }} className="bg-rose-500/10 dark:bg-rose-500/5 border border-rose-500/20 rounded-[2rem] p-6">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500 flex items-center justify-center text-white mb-3">
-            <ArrowUpRight size={20} />
-          </div>
-          <p className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest">Payable</p>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatCurrency(totalPayable)}</h2>
-        </motion.div>
-      </div>
-
-      <div className="relative overflow-hidden bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl border border-white/10">
-        <div className="absolute -top-32 -right-32 w-80 h-80 bg-indigo-500/20 blur-[4rem] rounded-full"></div>
+      <motion.div className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-6 shadow-xl border border-white/10">
+        <div className="absolute -top-32 -right-32 w-80 h-80 bg-indigo-500/20 blur-[4rem] rounded-full pointer-events-none"></div>
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-white tracking-tight">Debt Center</h1>
-            <p className="text-slate-400 text-sm">Managing records for {people.length} contacts</p>
+          <div className="space-y-3 text-center md:text-left">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md w-max mx-auto md:mx-0">
+              <HandCoins size={12} className="text-indigo-400" />
+              <p className="text-[9px] font-black text-slate-300 tracking-widest uppercase">Debt Center</p>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-0.5">Total Balance</p>
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">{formatCurrency(totalReceivable - totalPayable)}</h1>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => setShowPersonModal(true)} className="flex-1 md:flex-none px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all"><UserPlus size={18} /> Contact</button>
-            <button onClick={() => { setEditingId(null); setTxData({ personId: '', type: 'Lent', amount: '', description: '', date: format(new Date(), 'yyyy-MM-dd') }); setShowTxModal(true); }} className="flex-1 md:flex-none px-6 py-3.5 rounded-2xl bg-white text-slate-900 text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-all shadow-lg shadow-white/10"><Plus size={18} /> Entry</button>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 min-w-[130px]">
+              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Receivable</p>
+              <p className="text-base font-black text-emerald-400">{formatCurrency(totalReceivable)}</p>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 min-w-[130px]">
+              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Payable</p>
+              <p className="text-base font-black text-rose-400">{formatCurrency(totalPayable)}</p>
+            </div>
           </div>
         </div>
+      </motion.div>
+
+
+
+      <div className="flex gap-3">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+          <input type="text" placeholder="Search contacts or history..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-[1.25rem] py-3.5 pl-12 pr-4 text-sm font-medium shadow-sm outline-none text-slate-900 dark:text-white" />
+        </div>
+        <button 
+          onClick={() => { setEditingId(null); setTxData({ personId: '', type: 'Lent', amount: '', description: '', date: format(new Date(), 'yyyy-MM-dd') }); setShowTxModal(true); }}
+          className="w-[52px] h-[52px] bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[1.25rem] flex items-center justify-center shadow-lg active:scale-95 transition-all"
+        >
+          <Plus size={24} />
+        </button>
       </div>
 
       <div className="space-y-4">
@@ -244,13 +279,13 @@ const Lending = () => {
             <button 
               key={p._id} 
               onClick={() => handlePersonClick(p._id)}
-              className="flex-shrink-0 flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 hover:border-indigo-500/50 transition-all group"
+              className={`flex-shrink-0 flex items-center gap-3 bg-white dark:bg-slate-900 border rounded-2xl py-3 px-4 transition-all group ${selectedPersonId === p._id ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-800'}`}
             >
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${selectedPersonId === p._id ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 group-hover:bg-indigo-500 group-hover:text-white'}`}>
                 <User size={20} />
               </div>
               <div className="text-left pr-2">
-                <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{p.name}</p>
+                <p className={`text-sm font-bold transition-colors ${selectedPersonId === p._id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}`}>{p.name}</p>
                 <p className={`text-[10px] font-bold ${p.balance > 0 ? 'text-emerald-500' : p.balance < 0 ? 'text-rose-500' : 'text-slate-400'}`}>
                   {p.balance === 0 ? 'Settled' : formatCurrency(Math.abs(p.balance))}
                 </p>
@@ -258,15 +293,14 @@ const Lending = () => {
             </button>
           ))}
         </div>
+
+        <AnimatePresence>
+        </AnimatePresence>
       </div>
 
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">History Log</h3>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input type="text" placeholder="Filter..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-slate-100 dark:bg-slate-800/50 border-none rounded-full py-1.5 pl-9 pr-4 text-xs font-medium outline-none w-32 focus:w-48 transition-all" />
-          </div>
+          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{selectedPersonId ? 'Contact History' : 'History Log'}</h3>
         </div>
         
         <div className="space-y-3">
@@ -285,6 +319,7 @@ const Lending = () => {
                       <p className="text-[11px] text-slate-500 font-medium">
                         {tx.type.replace('_', ' ')} • {format(new Date(tx.date), 'MMM dd')}
                       </p>
+
                       {tx.description && (
                         <p className="text-[10px] text-slate-400 mt-1 italic flex items-center gap-1">
                           <Notebook size={10} /> {tx.description}
@@ -293,10 +328,17 @@ const Lending = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className={`font-bold text-base ${(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? 'text-rose-600' : 'text-emerald-600'}`}>
-                        {(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? '-' : '+'}{formatCurrency(tx.amount)}
-                      </p>
+                    <div className="text-right flex flex-col items-end">
+                      <p className={`font-bold text-base whitespace-nowrap ${(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? 'text-rose-600' : 'text-emerald-600'}`}>{(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? '-' : '+'}{formatCurrency(tx.amount)}</p>
+                      {tx.type === 'Lent' && tx.person && (
+                        <a 
+                          href={`https://wa.me/${tx.person.phoneNumber?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`Hi ${tx.person.name},\n\nJust a friendly reminder regarding the amount of ₹${tx.amount} for "${tx.description || tx.type}".\n\nThanks!`)}`}
+                          target="_blank" rel="noreferrer"
+                          className="flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest hover:underline mt-0.5"
+                        >
+                          <MessageCircle size={10} /> Remind
+                        </a>
+                      )}
                     </div>
                     <div className="relative">
                       <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === tx._id ? null : tx._id); }} className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400"><MoreHorizontal size={18} /></button>
@@ -326,100 +368,6 @@ const Lending = () => {
 
       {createPortal(
         <AnimatePresence>
-          {selectedPersonDetails && (
-            <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => dispatch(clearSelectedPerson())} className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-sm" />
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[90] flex items-center justify-center p-4 pointer-events-none">
-                <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 pointer-events-auto flex flex-col max-h-[90vh] overflow-hidden relative">
-                  
-                  <div className="p-8 border-b border-slate-100 dark:border-slate-800 shrink-0 relative">
-                    <div className="flex items-start gap-5">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl shadow-indigo-500/30 shrink-0">{selectedPersonDetails.person.name.charAt(0)}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-1 py-1">{selectedPersonDetails.person.name}</h2>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={(e) => handlePersonEdit(selectedPersonDetails.person, e)} className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 flex items-center justify-center transition-colors"><Edit2 size={16} /></button>
-                            <button onClick={(e) => handlePersonDelete(selectedPersonDetails.person._id, e)} className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors"><Trash2 size={16} /></button>
-                            <button onClick={() => dispatch(clearSelectedPerson())} className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors ml-1"><X size={18} /></button>
-                          </div>
-                        </div>
-                        <div className={`mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${selectedPersonDetails.person.balance > 0 ? 'bg-emerald-100 text-emerald-600' : selectedPersonDetails.person.balance < 0 ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-500'}`}>
-                          {selectedPersonDetails.person.balance === 0 ? 'Settled' : selectedPersonDetails.person.balance > 0 ? 'Owes you' : 'You owe'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-6">
-                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Balance</p>
-                        <p className={`text-lg font-bold mt-1 ${selectedPersonDetails.person.balance > 0 ? 'text-emerald-600' : selectedPersonDetails.person.balance < 0 ? 'text-rose-600' : 'text-slate-400'}`}>
-                          {formatCurrency(Math.abs(selectedPersonDetails.person.balance))}
-                        </p>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Activity</p>
-                        <p className="text-lg font-bold mt-1 text-slate-900 dark:text-white">{selectedPersonDetails.history.length}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto p-8 space-y-4 relative">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-2"><History size={12} /> Transaction History</h3>
-                    {selectedPersonDetails.history.length > 0 ? (
-                      <div className="space-y-3">
-                        {selectedPersonDetails.history.map((tx) => (
-                          <div key={tx._id} className="flex items-center justify-between group bg-slate-50 dark:bg-slate-900/30 p-3 rounded-2xl border border-transparent hover:border-indigo-500/20 transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shrink-0 shadow-sm">{getStatusIcon(tx.type)}</div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-900 dark:text-white">{tx.type.replace('_', ' ')}</p>
-                                <p className="text-[9px] text-slate-400 font-medium mt-0.5">{format(new Date(tx.date), 'MMM dd, yyyy')}</p>
-                                {tx.description && <p className="text-[9px] text-slate-500 italic mt-0.5 line-clamp-1">{tx.description}</p>}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <p className={`font-bold text-xs ${(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                {(tx.type === 'Lent' || tx.type === 'Repayment_Sent') ? '-' : '+'}{formatCurrency(tx.amount)}
-                              </p>
-                              <div className="relative">
-                                <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === tx._id ? null : tx._id); }} className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 opacity-0 group-hover:opacity-100 transition-all"><MoreHorizontal size={14} /></button>
-                                <AnimatePresence>
-                                  {activeMenuId === tx._id && (
-                                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute right-0 bottom-8 z-[100] w-28 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                      <button onClick={(e) => handleEdit(tx, e)} className="w-full px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"><Edit2 size={12} /> Edit</button>
-                                      <button onClick={(e) => handleDelete(tx._id, e)} className="w-full px-3 py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700"><Trash2 size={12} /> Delete</button>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-xs text-slate-500 py-4">No history yet.</p>
-                    )}
-                    {/* Bottom Blur Overlay for scrollable content */}
-                    <div className="sticky bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none" />
-                  </div>
-                  
-                  <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md shrink-0">
-                    <div className="flex gap-3">
-                      <a href={`tel:${selectedPersonDetails.person.phoneNumber}`} className="flex-none w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white hover:border-indigo-500 hover:text-indigo-500 transition-all shadow-sm"><Phone size={18} /></a>
-                      <a href={`https://wa.me/${selectedPersonDetails.person.phoneNumber?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${selectedPersonDetails.person.name},\n\nJust a gentle reminder regarding the pending amount of ₹${Math.abs(selectedPersonDetails.person.balance)}.\n\nThanks!`)}`} target="_blank" rel="noreferrer" className="flex-none w-12 h-12 rounded-2xl bg-emerald-500 border border-emerald-400 flex items-center justify-center text-white hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"><MessageCircle size={18} /></a>
-                      <button onClick={() => { setTxData({...txData, personId: selectedPersonDetails.person._id}); setShowTxModal(true); }} className="flex-1 h-12 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm shadow-xl active:scale-95 transition-all">Settle Up</button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-
-      {createPortal(
-        <AnimatePresence>
           {showTxModal && (
             <>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} onClick={() => { setShowTxModal(false); setEditingId(null); }} className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm" />
@@ -429,7 +377,18 @@ const Lending = () => {
                   <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">{editingId ? 'Edit' : 'New'} Record</h3>
                   <form onSubmit={onTxSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-500">Select Contact</label>
+                      <div className="flex items-center justify-between px-1">
+                        <label className="text-xs font-semibold text-slate-500">Select Contact</label>
+                        {!editingId && (
+                          <button 
+                            type="button"
+                            onClick={() => { setShowPersonModal(true); setEditingPersonId(null); setPersonData({ name: '', phoneNumber: '' }); }}
+                            className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1 hover:text-indigo-600 transition-colors"
+                          >
+                            <Plus size={10} strokeWidth={3} /> Add New
+                          </button>
+                        )}
+                      </div>
                       <select className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 px-5 text-sm font-bold outline-none" value={txData.personId} onChange={(e) => setTxData({...txData, personId: e.target.value})} required disabled={!!editingId}>
                         <option value="">Choose contact...</option>
                         {people.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}

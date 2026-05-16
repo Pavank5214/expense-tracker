@@ -72,7 +72,7 @@ const updateExpense = async (req, res) => {
     }
 
     const updatedExpense = await Expense.findByIdAndUpdate(req.params.id, req.body, {
-        returnDocument: 'after',
+        new: true,
     });
 
     res.status(200).json(updatedExpense);

@@ -75,16 +75,48 @@ const getDashboardStats = async (req, res) => {
             if (p.balance < 0) totalPayable += Math.abs(p.balance);
         });
 
+        // Pending Income Stats (Outstanding freelance/business receivables)
+        const pendingIncomeResult = await Income.aggregate([
+            { 
+                $match: { 
+                    ...userMatch, 
+                    $or: [
+                        { status: 'Pending' },
+                        { $and: [
+                            { totalProjectAmount: { $gt: 0 } },
+                            { $expr: { $gt: ['$totalProjectAmount', '$amount'] } }
+                        ]}
+                    ]
+                } 
+            },
+            { $group: { _id: null, total: { $sum: { $subtract: ['$totalProjectAmount', '$amount'] } } } }
+        ]);
+        const pendingIncome = pendingIncomeResult[0]?.total || 0;
+
         // Combined Recent Transactions
         const recentExpenses = await Expense.find({ user: userId }).sort({ date: -1 }).limit(10);
-        const recentIncomes = await Income.find({ user: userId }).sort({ date: -1 }).limit(10);
+        const recentIncomes = await Income.find({ user: userId }).sort({ date: -1 }).limit(10).populate('person');
+        const recentLending = await Lending.find({ user: userId }).sort({ date: -1 }).limit(10).populate('person');
         
-        const recentTransactions = [
+        const recentTransactionsRaw = [
             ...recentExpenses.map(e => ({...e._doc, type: 'expense'})), 
-            ...recentIncomes.map(i => ({...i._doc, type: 'income', category: i.source}))
+            ...recentIncomes.map(i => ({...i._doc, type: 'income', category: i.source})),
+            ...recentLending.map(l => ({
+                ...l._doc, 
+                type: 'lending', 
+                category: l.type, 
+                title: `${l.type.replace('_', ' ')}: ${l.person?.name || 'Someone'}`
+            }))
         ]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5);
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Deduplicate and limit
+        const seenIds = new Set();
+        const recentTransactions = recentTransactionsRaw.filter(tx => {
+            if (seenIds.has(tx._id.toString())) return false;
+            seenIds.add(tx._id.toString());
+            return true;
+        }).slice(0, 10);
 
         // Trend Grouping
         const groupTrend = async (Model, matchField = 'amount') => {
@@ -131,6 +163,8 @@ const getDashboardStats = async (req, res) => {
             periodLending,
             totalReceivable,
             totalPayable,
+            pendingIncome,
+            totalIWillGet: totalReceivable + pendingIncome,
             recentTransactions,
             trends: {
                 expenses: formatTrendData(expenseTrendRaw),

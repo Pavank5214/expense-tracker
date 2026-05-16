@@ -10,6 +10,7 @@ const getIncomes = async (req, res) => {
 
     const total = await Income.countDocuments({ user: req.user.id });
     const incomes = await Income.find({ user: req.user.id })
+        .populate('person')
         .sort({ date: -1 })
         .skip(skip)
         .limit(limit);
@@ -26,7 +27,7 @@ const getIncomes = async (req, res) => {
 // @route   POST /api/income
 // @access  Private
 const setIncome = async (req, res) => {
-    const { title, amount, source, date, notes, totalProjectAmount, status } = req.body;
+    const { title, amount, source, date, notes, totalProjectAmount, status, person } = req.body;
 
     if (!title || amount === undefined) {
         res.status(400);
@@ -42,6 +43,7 @@ const setIncome = async (req, res) => {
         source,
         date,
         notes,
+        person: person || null,
     });
 
     res.status(201).json(income);
@@ -63,8 +65,11 @@ const updateIncome = async (req, res) => {
         throw new Error('User not authorized');
     }
 
-    const updatedIncome = await Income.findByIdAndUpdate(req.params.id, req.body, {
-        returnDocument: 'after',
+    const updateData = { ...req.body };
+    if (updateData.person === '') updateData.person = null;
+
+    const updatedIncome = await Income.findByIdAndUpdate(req.params.id, updateData, {
+        new: true,
     });
 
     res.status(200).json(updatedIncome);

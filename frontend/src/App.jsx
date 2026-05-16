@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, resolveValue, toast as hotToast } from 'react-hot-toast';
+import { X } from 'lucide-react';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -43,31 +44,50 @@ function App() {
       <Toaster 
         position="top-center"
         toastOptions={{
+          duration: 3500,
           style: {
-            background: 'rgba(15, 23, 42, 0.9)',
+            background: '#0f172a',
             color: '#fff',
-            backdropFilter: 'blur(8px)',
             borderRadius: '1rem',
-            padding: '12px 24px',
-            fontSize: '14px',
+            padding: '10px 16px',
+            fontSize: '13px',
             fontWeight: '600',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
+            maxWidth: '400px',
           },
         }}
-      />
+      >
+        {(t) => (
+          <div 
+            style={{
+              ...t.style,
+              opacity: t.visible ? 1 : 0,
+              background: '#0f172a',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              borderRadius: '1.25rem',
+              width: '100%',
+              minWidth: '280px',
+              maxWidth: '380px',
+            }}
+            className={`${t.visible ? 'animate-in fade-in zoom-in-95 duration-300' : 'animate-out fade-out zoom-out-95 duration-300'} flex items-center gap-4 p-4 mx-auto`}
+          >
+            <div className="shrink-0 flex items-center justify-center">{t.icon}</div>
+            <div className="flex-1 text-slate-100 font-bold tracking-tight leading-tight">
+              {resolveValue(t.message, t)}
+            </div>
+            {(t.type === 'success' || t.type === 'error') && (
+              <button 
+                onClick={() => hotToast.dismiss(t.id)}
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-all"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        )}
+      </Toaster>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
